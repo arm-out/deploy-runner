@@ -28,16 +28,29 @@ app.post("/webhook", (req, res) => {
 		return res.status(401).send("Mismatched signatures");
 	}
 
-	// Execute your deployment script
-	exec("./deploy.sh", (error, stdout, stderr) => {
-		if (error) {
-			console.error(`exec error: ${error}`);
-			return res.status(500).send("Deployment script failed");
-		}
-		console.log(`stdout: ${stdout}`);
-		console.error(`stderr: ${stderr}`);
-		res.status(200).send("Deployment initiated");
-	});
+	const payload = req.body
+	const ref = payload.ref
+
+	// Only listen to changes in the prod branch
+	if (ref === "refs/heads/prod") {
+		console.log("{a}: push to prod detected")
+		
+		// Execute your deployment script
+		exec("./deploy.sh", (error, stdout, stderr) => {
+			if (error) {
+				console.error(`exec error: ${error}`);
+				return res.status(500).send("Deployment script failed");
+			}
+			console.log(`stdout: ${stdout}`);
+			console.error(`stderr: ${stderr}`);
+			res.status(200).send("Deployment initiated");
+		});
+	}
+	else {
+		console.log("{a}: push in other branch ", ref)
+	}
+
+	
 });
 
 app.listen(port, () => {
